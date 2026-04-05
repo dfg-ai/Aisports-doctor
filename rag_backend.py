@@ -35,9 +35,23 @@ class MultiKBSystem:
         self.conversations = {}
 
     def _load_kb_info(self):
+        logger.info(f"加载知识库信息，路径: {self.kb_metadata_path}")
+        logger.info(f"文件存在: {self.kb_metadata_path.exists()}")
         if self.kb_metadata_path.exists():
-            with open(self.kb_metadata_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+            try:
+                with open(self.kb_metadata_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    logger.info(f"文件内容: {content}")
+                    data = json.loads(content)
+                    logger.info(f"加载的数据: {data}")
+                    logger.info(f"知识库数量: {len(data)}")
+                    return data
+            except Exception as e:
+                logger.error(f"读取文件失败: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            logger.warning(f"知识库文件不存在: {self.kb_metadata_path}")
         return {}
 
     def add_file(self, uploaded_file):
@@ -84,7 +98,13 @@ class MultiKBSystem:
 
     def ask(self, question: str, kb_ids: List[str], conversation_id=None):
         """Agentic RAG：先问诊检查，再检索回答"""
+        logger.info(f"进入ask方法，问题: {question}")
+        logger.info(f"传入的kb_ids: {kb_ids}")
+        logger.info(f"当前kb_info: {self.kb_info}")
+        logger.info(f"kb_info长度: {len(self.kb_info)}")
+        
         if not kb_ids:
+            logger.info("kb_ids为空，返回提示")
             return "请先上传并选择康复知识库。", [], conversation_id, {"faithfulness": 0, "relevance": 0}
 
         llm = Tongyi(model="qwen-plus", temperature=0.1)
